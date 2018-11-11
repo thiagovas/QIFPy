@@ -2,79 +2,106 @@
   TODO(thiagovas): Explain a bit about the channel class.
 """
 
-__all__ = ["Channel"]
+from typing import Iterable
+from math import isclose
+from numpy.random import uniform as numpy_uniform
+from scipy.stats import entropy as scipy_entropy
+
+__all__ = ["BaseDistribution", "Channel"]
 
 
 def BaseDistribution(object):
-  """Probability Distribution.
+    """Probability Distribution.
 
-    Utility class which represents probability distributions.
-    It also contains utilitary functions, such as IsDistribution,
-    that checks whether a given array represents a probability distribution.
-    Further, it contains information theoretic functions, as Shannon Entropy,
-    Renyi min-entropy, etc.
+      Utility class which represents probability distributions.
+      It also contains utilitary functions, such as IsDistribution,
+      that checks whether a given array represents a probability distribution.
+      Further, it contains information theoretic functions, as Shannon Entropy,
+      Renyi min-entropy, etc.
 
-    Attributes:
-        likes_spam: A boolean indicating if we like SPAM or not.
-        eggs: An integer count of the eggs we have laid.
+      Attributes:
+          None.
     """
 
-  def __init__(self):
-    """Inits SampleClass with blah."""
-    pass
+    def __init__(self, n_items: int = 1, dist: List[float] = None) -> None:
+        """Inits BaseDistribution with a uniform distribution of size
+            n_items.
 
-  @staticmethod
-  def IsDistribution(dist):
-    """Fetches rows from a Bigtable.
+            One can also build an instance of this class from a previous
+            distribution by setting the dist attribute.
 
-    Retrieves rows pertaining to the given keys from the Table instance
-    represented by big_table.  Silly things may happen if
-    other_silly_variable is not None.
+          Attributes:
+              n_items: The number of entries of the probability distribution.
+              dist: A vector of floats representing a probability distribution.
+        """
+        if dist:
+            self._dist = dist
+            self._dist_size = len(dist)
+        else:
+            self._dist = [1.0f/n_items for x in n_items]
+            self._dist_size = n_items
 
-    Args:
-        big_table: An open Bigtable Table instance.
-        keys: A sequence of strings representing the key of each table row
-            to fetch.
-        other_silly_variable: Another optional variable, that has a much
-            longer name than the other args, and which does nothing.
+    @staticmethod
+    def IsDistribution(dist: Iterable[float]) -> bool:
+        """Returns whether a given array represents a distribution or not.
 
-    Returns:
-        A dict mapping keys to the corresponding table row data
-        fetched. Each row is represented as a tuple of strings. For
-        example:
+        The function checks whether there is no negative numbers at the input,
+        and whether the sum of all values equals to 1.
 
-        {'Serak': ('Rigel VII', 'Preparer'),
-         'Zim': ('Irk', 'Invader'),
-         'Lrrr': ('Omicron Persei 8', 'Emperor')}
+        Args:
+            dist: An open Bigtable Table instance.
 
-        If a key from the keys argument is missing from the dictionary,
-        then that row was not found in the table.
+        Returns:
+            A boolean, true if the parameter represents a probability
+            distribution, and false otherwise.
 
-    Raises:
-        IOError: An error occurred accessing the bigtable.Table object.
-    """
-    pass
+        Raises:
+            Nothing.
+        """
+        dist_sum = 0.0f
+        for x in dist:
+            if x < 0:
+                return False
+            else:
+                dist_sum += x
+        return isclose(dist_sum, 1, rel_tol=1e-6)
 
-  def MutualInformation(self):
-    pass
+    def Randomize(self) -> None:
+        """Randomize the current probability distribution."""
+        dist_sum = 0.0f
+        self._dist = []
+        for x in self._dist_size:
+            new_p = numpy_uniform()
+            self._dist.append(new_p)
+            dist_sum += new_p
 
-  def NormalizedMutualInformation(self):
-    pass
-
-  def ShannonEntropy(self):
-    pass
-
-  def RenyiEntropy(self):
-    pass
-
-  def GuessingEntropy(self):
-    pass
+        for i in range(len(self._dist)):
+            self._dist[i] /= dist_sum
 
 
+    def ShannonEntropy(self, base: float = 2) -> float:
+        """Calculates the Shannon entropy.
+        
+        Args:
+            base: The logarithmic base to use, defaults to 2.
+        """
+        return scipy_entropy(self._dist, base)
 
+    def RenyiMinEntropy(self) -> float:
+        raise NotImplementedError("Renyi min-entropy not"
+                                  "implemented yet")
 
+    def GuessingEntropy(self) -> float:
+        """Calculates the Guessing entropy."""
+        tmp_dist = reverse(sorted(self._dist))
+        gentropy = 0.0f
+        question_index = 1
+        for x in tmp_dist:
+            gentropy += question_index*x
+            question_index += 1
+        return gentropy
+        
 
-
-def Channel(object):
-  def __init__(self):
-    pass
+class Channel(object):
+    def __init__(self):
+        pass

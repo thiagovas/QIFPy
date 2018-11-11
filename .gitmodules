@@ -1,0 +1,3 @@
+[submodule "external/pytruth"]
+	path = external/pytruth
+	url = https://github.com/google/pytruth.git
