@@ -3,6 +3,7 @@
 """
 
 from typing import Iterable
+from typing import List
 from math import isclose
 from numpy.random import uniform as numpy_uniform
 from scipy.stats import entropy as scipy_entropy
@@ -10,7 +11,7 @@ from scipy.stats import entropy as scipy_entropy
 __all__ = ["BaseDistribution", "Channel"]
 
 
-def BaseDistribution(object):
+class BaseDistribution(object):
     """Probability Distribution.
 
       Utility class which represents probability distributions.
@@ -38,7 +39,7 @@ def BaseDistribution(object):
             self._dist = dist
             self._dist_size = len(dist)
         else:
-            self._dist = [1.0f/n_items for x in n_items]
+            self._dist = [1.0/n_items for x in range(n_items)]
             self._dist_size = n_items
 
     @staticmethod
@@ -58,19 +59,19 @@ def BaseDistribution(object):
         Raises:
             Nothing.
         """
-        dist_sum = 0.0f
+        dist_sum = 0.0
         for x in dist:
             if x < 0:
                 return False
             else:
                 dist_sum += x
-        return isclose(dist_sum, 1, rel_tol=1e-6)
+        return isclose(dist_sum, 1.0, rel_tol=1e-6)
 
     def Randomize(self) -> None:
         """Randomize the current probability distribution."""
-        dist_sum = 0.0f
+        dist_sum = 0.0
         self._dist = []
-        for x in self._dist_size:
+        for x in range(self._dist_size):
             new_p = numpy_uniform()
             self._dist.append(new_p)
             dist_sum += new_p
@@ -94,7 +95,7 @@ def BaseDistribution(object):
     def GuessingEntropy(self) -> float:
         """Calculates the Guessing entropy."""
         tmp_dist = reverse(sorted(self._dist))
-        gentropy = 0.0f
+        gentropy = 0.0
         question_index = 1
         for x in tmp_dist:
             gentropy += question_index*x
