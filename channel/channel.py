@@ -1,14 +1,15 @@
 """
-  TODO(thiagovas): Explain a bit about the channel class.
+    File with the Channel class and its helper classes.
 """
 
-from typing import Iterable
-from typing import List
 from math import isclose
+from math import log
 from numpy.random import uniform as numpy_uniform
 from scipy.stats import entropy as scipy_entropy
+from typing import Iterable
+from typing import List
 
-__all__ = ["BaseDistribution", "Channel"]
+__all__ = ["BaseDistribution", "Channel", "ChannelOptions"]
 
 
 class BaseDistribution(object):
@@ -43,7 +44,7 @@ class BaseDistribution(object):
             self._dist_size = n_items
 
     @staticmethod
-    def IsDistribution(dist: Iterable[float]) -> bool:
+    def is_distribution(dist: Iterable[float]) -> bool:
         """Returns whether a given array represents a distribution or not.
 
         The function checks whether there is no negative numbers at the input,
@@ -67,8 +68,15 @@ class BaseDistribution(object):
                 dist_sum += x
         return isclose(dist_sum, 1.0, rel_tol=1e-6)
 
-    def Randomize(self) -> None:
-        """Randomize the current probability distribution."""
+    def randomize(self) -> None:
+        """Randomize the current probability distribution.
+        
+        Args:
+            None.
+        
+        Returns:
+            Nothing.
+        """
         dist_sum = 0.0
         self._dist = []
         for x in range(self._dist_size):
@@ -80,20 +88,46 @@ class BaseDistribution(object):
             self._dist[i] /= dist_sum
 
 
-    def ShannonEntropy(self, base: float = 2) -> float:
+    def shannon_entropy(self, base: float = 2) -> float:
         """Calculates the Shannon entropy.
         
         Args:
             base: The logarithmic base to use, defaults to 2.
+
+        Returns:
+            A float value, the shannon entropy of the distribution.
         """
-        return scipy_entropy(self._dist, base)
+        return scipy_entropy(self._dist, base=base)
+    
+    def bayes_entropy(self) -> float:
+        """
+        """
+        pass    
 
-    def RenyiMinEntropy(self) -> float:
-        raise NotImplementedError("Renyi min-entropy not"
-                                  "implemented yet")
+    def renyi_min_entropy(self, base: float = 2) -> float:
+        """Calculates the Renyi min-entropy.
 
-    def GuessingEntropy(self) -> float:
-        """Calculates the Guessing entropy."""
+        Args:
+            base: The logarithmic base to use, defaults to 2.
+
+        Returns:
+            A float value, the Renyi Min-Entropy of the distribution.
+        """
+      
+        entropy = 0.0
+        for p in self._dist:
+            entropy = max(entropy, p)
+        return log(entropy, base)
+
+    def guessing_entropy(self) -> float:
+        """Calculates the Guessing entropy.
+    
+        Args:
+            None.
+
+        Returns:
+            A float value, the guessing entropy of the distribution.
+        """
         tmp_dist = reverse(sorted(self._dist))
         gentropy = 0.0
         question_index = 1
@@ -101,8 +135,98 @@ class BaseDistribution(object):
             gentropy += question_index*x
             question_index += 1
         return gentropy
-        
+
+
+class ChannelOptions(object):
+    """Class with options set to Channel.
+       
+       By default the options are set to a 2x2 identity channel.
+
+        Attributes:
+        c_matrix: An array of BaseDistribution objects representing the
+                    conditional matrix of a channel.
+        prior: A BaseDistribution object representing the prior
+                distribution of the channel.    
+    """
+
+    def __init__(self):
+        """Constructor for Channel Options."""
+        self.SetIdentity(2)
+        self.c_matrix = [BaseDistribution(dist=[1, 0]),
+                         BaseDistribution(dist=[0, 1])]
+        self.prior = BaseDistribution(dist=[0.5, 0.5])
+
+    def set_c_matrix(self, matrix: Iterable[BaseDistribution]) -> ChannelOptions:
+        """ """
+        self.c_matrix = matrix
+
+    def set_prior_distribution(self, dist: BaseDistribution) -> ChannelOptions:
+        """ """
+        seld.prior = dist
+
+    def set_identity(self, dimension: int = 2) -> ChannelOptions:
+        """ """
+        self.c_matrix = []
+        prior_dist = [1.0/dimension for d in range(dimension)]
+
+        for d in range(dimension):
+            c_dist = [0.0]*dimension
+            c_dist[d] = 1.0
+            self.c_matrix.append(BaseDistribution(dist=c_dist))
+
 
 class Channel(object):
-    def __init__(self):
+    """Information Theoretic Channel.
+
+      Class representing a information theoreric channel. The class is
+      instantiated through a set of options defined at the ChannelOptions
+      class.
+
+      Attributes:
+        options: Instance of ChannelOptions, describing the channel with the
+                 conditional distributions and prior.
+        outter: Instance of BaseDistribution containing the outter distribution
+                of the channel.
+    """
+
+    def __init__(self, options: ChannelOptions):
+        self.options = options
+
+    def __str__(self):
+        pass
+
+    def randomize(self):
+        pass
+
+    def compute_j_matrix(self) -> None:
+        pass
+
+    def compute_outter_distribution(self) -> None:
+        pass
+
+    def compute_max_prior(self) -> None:
+        pass
+
+    def compute_max_poutter(self) -> None:
+        pass
+
+    def mutual_information(self) -> float:
+        pass
+
+    def normalized_mutual_information(self) -> float:
+        pass
+
+    def symmetric_uncertainty(self) -> float:
+        pass
+
+    def conditional_entropy(self) -> float:
+        pass
+
+    def conditional_entropy_hyper(self) -> float:
+        pass
+
+    def joint_shannon_entropy(self) -> float:
+        pass
+
+    def joint_guessing_entropy(self) -> float:
         pass
