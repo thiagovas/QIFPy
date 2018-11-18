@@ -70,10 +70,10 @@ class BaseDistribution(object):
 
     def randomize(self) -> None:
         """Randomize the current probability distribution.
-        
+
         Args:
             None.
-        
+
         Returns:
             Nothing.
         """
@@ -90,7 +90,7 @@ class BaseDistribution(object):
 
     def shannon_entropy(self, base: float = 2) -> float:
         """Calculates the Shannon entropy.
-        
+
         Args:
             base: The logarithmic base to use, defaults to 2.
 
@@ -98,11 +98,20 @@ class BaseDistribution(object):
             A float value, the shannon entropy of the distribution.
         """
         return scipy_entropy(self._dist, base=base)
-    
+
     def bayes_entropy(self) -> float:
+        """Calculates the Bayes entropy.
+
+        Args:
+            None.
+
+        Return:
+            A float value, the Bayes entropy of the distribution.
         """
-        """
-        pass    
+        entropy = 0.0
+        for p in self._dist:
+            entropy = max(entropy, p)
+        return entropy
 
     def renyi_min_entropy(self, base: float = 2) -> float:
         """Calculates the Renyi min-entropy.
@@ -113,15 +122,11 @@ class BaseDistribution(object):
         Returns:
             A float value, the Renyi Min-Entropy of the distribution.
         """
-      
-        entropy = 0.0
-        for p in self._dist:
-            entropy = max(entropy, p)
-        return log(entropy, base)
+        return log(self.bayes_entropy(), base)
 
     def guessing_entropy(self) -> float:
         """Calculates the Guessing entropy.
-    
+
         Args:
             None.
 
@@ -137,16 +142,77 @@ class BaseDistribution(object):
         return gentropy
 
 
+class Distribution2D(BaseDistribution):
+    """Helper class representing a two dimensional probability distribution.
+
+       The class contains helper methods to convert indices, and specific
+       initializers.
+    """
+
+    def __init__(self, n_rows: int = 2, n_columns: int = 2):
+        """Constructor of the Distribution2D class.
+
+        Args:
+            n_rows: An integer value, the number of rows of the distribution.
+            n_columns: An integer value, the number of columns of the
+                       distribution.
+        """
+        self._n_rows = n_rows
+        self._n_columns = n_columns
+        self._dist = BaseDistribution(n_items = n_rows * n_columns)
+    
+    def _get_linear_index(self, row_index: int, column_index: int) -> int:
+        """Converts 2D indices to a 1D index.
+        
+        Args:
+            row_index: An integer value, the index of the row of the
+                       distribution.
+            column_index: An integer value, the index of the column of the
+                          distribution.
+
+        Returns:
+            An integer value, the correspondent index on a 1D array which
+            corresponds the 2D indices parameters.
+        """
+        pass
+
+    def p(self, row_index: int, column_index: int) -> float:
+        """Getter of the probability.
+
+        Args:
+            row_index: An integer value, the index of the row of the
+                       distribution.
+            column_index: An integer value, the index of the column of the
+                          distribution.
+
+        Returns:
+            A float value, the probability p(row_index, column_index).
+        """
+        pass
+
+    def set_p(self, row_index: int, column_index: int, value: float) -> None:
+        """Setter to a cell of the probability distribution.
+
+        Args:
+            row_index: An integer value, the index of the row of the
+                       distribution.
+            column_index: An integer value, the index of the column of the
+                          distribution.
+            value: A float value, the value to which the cell will assume.
+        """
+        pass
+
+
 class ChannelOptions(object):
     """Class with options set to Channel.
-       
+
        By default the options are set to a 2x2 identity channel.
 
-        Attributes:
+       Attributes:
         c_matrix: An array of BaseDistribution objects representing the
                     conditional matrix of a channel.
         prior: A BaseDistribution object representing the prior
-                distribution of the channel.    
+                distribution of the channel.
     """
 
     def __init__(self):
@@ -157,15 +223,19 @@ class ChannelOptions(object):
         self.prior = BaseDistribution(dist=[0.5, 0.5])
 
     def set_c_matrix(self, matrix: Iterable[BaseDistribution]) -> ChannelOptions:
-        """ """
+        """Setter to the conditional matrix of the channel."""
         self.c_matrix = matrix
 
     def set_prior_distribution(self, dist: BaseDistribution) -> ChannelOptions:
-        """ """
+        """Setter to the prior distribution of the channel."""
         seld.prior = dist
 
     def set_identity(self, dimension: int = 2) -> ChannelOptions:
-        """ """
+        """Sets the options to a identity quadratic channel.
+
+        Args:
+            dimension: An int value, the dimension of the channel.
+        """
         self.c_matrix = []
         prior_dist = [1.0/dimension for d in range(dimension)]
 
@@ -190,43 +260,99 @@ class Channel(object):
     """
 
     def __init__(self, options: ChannelOptions):
+        """Constructor of the Channel class.
+
+           The function instantiates the protected attributes of the class:
+            * _j_matrix - An instance of Distribution2D, representing the joint
+                          distirbution calculated over the prior and
+                          conditionals set at the channel options.
+            * _outter_dist - An instance of BaseDistribution, representing the
+                             outter distribution.
+            * _max_prior - A float value, representing the maximum value of the
+                           prior distribution.
+            * _max_poutter - A float value, representing the maximum value of
+                             the outter distribution.
+        """
         self.options = options
+        self.compute_all()
 
     def __str__(self):
+        """ """
         pass
 
     def randomize(self):
+        """ """
         pass
 
+    def compute_all(self) -> None:
+        """Call all pre-computation functions.
+
+        Args:
+            None.
+
+        Returns:
+            Nothing.
+        """
+        self.compute_j_matrix()
+        self.compute_outter_distribution()
+        self.compute_max_prior()
+        self.compute_max_poutter()
+
     def compute_j_matrix(self) -> None:
+        """ """
         pass
 
     def compute_outter_distribution(self) -> None:
+        """ """
         pass
 
     def compute_max_prior(self) -> None:
+        """ """
         pass
 
     def compute_max_poutter(self) -> None:
+        """ """
         pass
 
     def mutual_information(self) -> float:
+        """ """
         pass
 
     def normalized_mutual_information(self) -> float:
+        """ """
         pass
 
     def symmetric_uncertainty(self) -> float:
+        """ """
         pass
 
     def conditional_entropy(self) -> float:
+        """Computes the conditional shannon entropy H(Y|X).
+
+        Args:
+            None.
+
+        Returns:
+            A float value, the conditional entropy H(Y|X).
+        """
         pass
 
     def conditional_entropy_hyper(self) -> float:
+        """Computes the conditional shannon entropy on the hyper distribution.
+           H(X|Y).
+
+        Args:
+            None.
+
+        Returns:
+            A float value, the conditional entropy H(X|Y).
+        """
         pass
 
     def joint_shannon_entropy(self) -> float:
+        """ """
         pass
 
     def joint_guessing_entropy(self) -> float:
+        """ """
         pass
