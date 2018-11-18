@@ -9,7 +9,7 @@ from scipy.stats import entropy as scipy_entropy
 from typing import Iterable
 from typing import List
 
-__all__ = ["BaseDistribution", "Channel", "ChannelOptions"]
+__all__ = ["BaseDistribution", "Channel", "ChannelOptions", "Distribution2D"]
 
 
 class BaseDistribution(object):
@@ -87,7 +87,6 @@ class BaseDistribution(object):
         for i in range(len(self._dist)):
             self._dist[i] /= dist_sum
 
-
     def shannon_entropy(self, base: float = 2) -> float:
         """Calculates the Shannon entropy.
 
@@ -159,11 +158,13 @@ class Distribution2D(BaseDistribution):
         """
         self._n_rows = n_rows
         self._n_columns = n_columns
-        self._dist = BaseDistribution(n_items = n_rows * n_columns)
-    
+        super().__init__(n_items = n_rows * n_columns)
+
     def _get_linear_index(self, row_index: int, column_index: int) -> int:
         """Converts 2D indices to a 1D index.
-        
+
+            All indices are 0-based.
+
         Args:
             row_index: An integer value, the index of the row of the
                        distribution.
@@ -174,9 +175,9 @@ class Distribution2D(BaseDistribution):
             An integer value, the correspondent index on a 1D array which
             corresponds the 2D indices parameters.
         """
-        pass
+        return self._n_columns*row_index + column_index
 
-    def p(self, row_index: int, column_index: int) -> float:
+    def get_p(self, row_index: int, column_index: int) -> float:
         """Getter of the probability.
 
         Args:
@@ -188,7 +189,8 @@ class Distribution2D(BaseDistribution):
         Returns:
             A float value, the probability p(row_index, column_index).
         """
-        pass
+        index_dist = self._get_linear_index(row_index, column_index)
+        return self._dist[index_dist]
 
     def set_p(self, row_index: int, column_index: int, value: float) -> None:
         """Setter to a cell of the probability distribution.
@@ -199,8 +201,12 @@ class Distribution2D(BaseDistribution):
             column_index: An integer value, the index of the column of the
                           distribution.
             value: A float value, the value to which the cell will assume.
+
+        Returns:
+            Nothing.
         """
-        pass
+        index_dist = self._get_linear_index(row_index, column_index)
+        self._dist[index_dist] = value
 
 
 class ChannelOptions(object):
@@ -217,32 +223,50 @@ class ChannelOptions(object):
 
     def __init__(self):
         """Constructor for Channel Options."""
-        self.SetIdentity(2)
-        self.c_matrix = [BaseDistribution(dist=[1, 0]),
-                         BaseDistribution(dist=[0, 1])]
-        self.prior = BaseDistribution(dist=[0.5, 0.5])
+        self.set_identity(dimension = 2)
 
-    def set_c_matrix(self, matrix: Iterable[BaseDistribution]) -> ChannelOptions:
-        """Setter to the conditional matrix of the channel."""
+    def set_c_matrix(self, matrix: Iterable[BaseDistribution]):
+        """Setter to the conditional matrix of the channel.
+
+        Args:
+            matrix: An iterable of BaseDistribution, representing the
+                    conditional probability distributions.
+
+        Returns:
+            self, the instance of ChannelOptions.
+        """
         self.c_matrix = matrix
+        return self
 
-    def set_prior_distribution(self, dist: BaseDistribution) -> ChannelOptions:
-        """Setter to the prior distribution of the channel."""
-        seld.prior = dist
+    def set_prior_distribution(self, dist: BaseDistribution):
+        """Setter to the prior distribution of the channel.
 
-    def set_identity(self, dimension: int = 2) -> ChannelOptions:
+        Args:
+            dist: An instance of BaseDistribution, the prior distribution.
+
+        Returns:
+            self, the instance of ChannelOptions.
+        """
+        self.prior = dist
+        return self
+
+    def set_identity(self, dimension: int = 2):
         """Sets the options to a identity quadratic channel.
 
         Args:
             dimension: An int value, the dimension of the channel.
+
+        Returns:
+            self, the instance of ChannelOptions.
         """
         self.c_matrix = []
-        prior_dist = [1.0/dimension for d in range(dimension)]
+        self.prior = BaseDistribution(dist=[1.0/dimension for d in range(dimension)])
 
         for d in range(dimension):
             c_dist = [0.0]*dimension
             c_dist[d] = 1.0
             self.c_matrix.append(BaseDistribution(dist=c_dist))
+        return self
 
 
 class Channel(object):
@@ -274,6 +298,10 @@ class Channel(object):
                              the outter distribution.
         """
         self.options = options
+        self._j_matrix = None
+        self._outter_dist = None
+        self._max_prior = None
+        self._max_poutter = None
         self.compute_all()
 
     def __str__(self):
@@ -281,8 +309,12 @@ class Channel(object):
         pass
 
     def randomize(self):
-        """ """
-        pass
+        """Randomizes the channel."""
+        for d in self.options.c_matrix:
+            d.randomize()
+
+        self.options.prior.randomize()
+        self.compute_all()
 
     def compute_all(self) -> None:
         """Call all pre-computation functions.
