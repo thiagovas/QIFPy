@@ -215,15 +215,17 @@ class ChannelOptions(object):
        By default the options are set to a 2x2 identity channel.
 
        Attributes:
+        n_rows: An integer, the number of rows of the Channel.
+        n_columns: An integer, the number of columns of the Channel.
         c_matrix: An array of BaseDistribution objects representing the
                     conditional matrix of a channel.
         prior: A BaseDistribution object representing the prior
                 distribution of the channel.
     """
 
-    def __init__(self):
+    def __init__(self, n_rows: int = 2, n_columns: int = 2):
         """Constructor for Channel Options."""
-        self.set_identity(dimension = 2)
+        self.set_uniform(n_rows, n_columns)
 
     def set_c_matrix(self, matrix: Iterable[BaseDistribution]):
         """Setter to the conditional matrix of the channel.
@@ -235,6 +237,8 @@ class ChannelOptions(object):
         Returns:
             self, the instance of ChannelOptions.
         """
+        # TODO(thiagovas): Perform some checks, such as if all BaseDistribution
+        #                  instances are of the same size.
         self.c_matrix = matrix
         return self
 
@@ -247,7 +251,24 @@ class ChannelOptions(object):
         Returns:
             self, the instance of ChannelOptions.
         """
+        # TODO(thiagovas): Raise an exception if len(dist) != self.n_rows.
         self.prior = dist
+        return self
+    
+    def set_uniform(self, n_rows: int = 2, n_columns: int = 2):
+        """Sets the options to a uniform n_rows x n_columns channel.
+            
+        Args:
+            n_rows: An integer, the number of rows of the Channel.
+            n_columns: An integer, the number of columns of the Channel.
+
+        Returns:
+            self, the instance of ChannelOptions.
+        """
+        self.n_rows = n_rows
+        self.n_columns = n_columns
+        self.c_matrix = [BaseDistribution(n_items = n_columns) for x in range(n_columns)]
+        self.prior = BaseDistribution(n_items = n_rows)
         return self
 
     def set_identity(self, dimension: int = 2):
@@ -261,6 +282,8 @@ class ChannelOptions(object):
         """
         self.c_matrix = []
         self.prior = BaseDistribution(dist=[1.0/dimension for d in range(dimension)])
+        self.n_rows = dimension
+        self.n_columns = dimension
 
         for d in range(dimension):
             c_dist = [0.0]*dimension
@@ -288,7 +311,7 @@ class Channel(object):
 
            The function instantiates the protected attributes of the class:
             * _j_matrix - An instance of Distribution2D, representing the joint
-                          distirbution calculated over the prior and
+                          distribution calculated over the prior and
                           conditionals set at the channel options.
             * _outter_dist - An instance of BaseDistribution, representing the
                              outter distribution.
