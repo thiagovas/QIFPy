@@ -2,6 +2,7 @@
     File with the Channel class and its helper classes.
 """
 
+from copy import deepcopy
 from math import isclose
 from math import log
 from numpy.random import uniform as numpy_uniform
@@ -42,6 +43,29 @@ class BaseDistribution(object):
         else:
             self._dist = [1.0/n_items for x in range(n_items)]
             self._dist_size = n_items
+    
+    def get_p(self, index_dist: int) -> float:
+        """Getter of the probability.
+
+        Args:
+            index_dist: An integer value, the index of the distribution.
+
+        Returns:
+            A float value, the probability p(index_dist).
+        """
+        return self._dist[index_dist]
+
+    def set_p(self, index_dist: int, value: float) -> None:
+        """Setter to a cell of the probability distribution.
+
+        Args:
+            index_dist: An integer value, the index of the distribution.
+            value: A float value, the value to which the cell will assume.
+
+        Returns:
+            Nothing.
+        """
+        self._dist[index_dist] = value
 
     @staticmethod
     def is_distribution(dist: Iterable[float]) -> bool:
@@ -355,7 +379,14 @@ class Channel(object):
 
     def compute_j_matrix(self) -> None:
         """ """
-        pass
+        self._j_matrix = Distribution2D(n_rows=self.options.n_rows,
+                                        n_columns=self.options.n_columns)
+        cur_row = 0
+        for dist in self.options.c_matrix:
+            for column_index in range(self.options.n_columns):
+                self._j_matrix.set_p(row_index=cur_row, column_index=column_index,
+                                     value=dist.get_p(column_index)*self.options.prior.get_p(cur_row))
+            cur_rows += 1
 
     def compute_outter_distribution(self) -> None:
         """ """
