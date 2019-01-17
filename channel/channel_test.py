@@ -1,6 +1,9 @@
 """
   File that contains unit tests and test fixtures to evaluate the correctness
   of the classes found at the channel.py file.
+
+  To run the tests:
+    https://docs.python.org/2/library/unittest.html#command-line-interface
 """
 
 from unittest import TestCase

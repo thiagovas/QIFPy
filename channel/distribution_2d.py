@@ -9,6 +9,7 @@ from numpy.random import uniform as numpy_uniform
 from scipy.stats import entropy as scipy_entropy
 from typing import Iterable
 from typing import List
+from base_distribution import BaseDistribution
 
 __all__ = ["Distribution2D"]
 

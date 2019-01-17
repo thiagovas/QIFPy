@@ -161,14 +161,14 @@ class Channel(object):
 
     def compute_j_matrix(self) -> None:
         """ """
-        self._j_matrix = Distribution2D(n_rows=self.options.n_rows,
+        self._j_matrix = Distribution2D(n_rows=self.options.n_rows, \
                                         n_columns=self.options.n_columns)
         cur_row = 0
         for dist in self.options.c_matrix:
             for column_index in range(self.options.n_columns):
-                self._j_matrix.set_p(row_index=cur_row, column_index=column_index,
+                self._j_matrix.set_p(row_index=cur_row, column_index=column_index, \
                                      value=dist.get_p(column_index)*self.options.prior.get_p(cur_row))
-            cur_rows += 1
+            cur_row += 1
 
     def compute_outter_distribution(self) -> None:
         """ """
