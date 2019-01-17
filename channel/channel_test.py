@@ -6,8 +6,8 @@
 from unittest import TestCase
 from unittest import main as unittest_main
 from copy import deepcopy
-from channel import BaseDistribution
-from channel import Distribution2D
+from base_distribution import BaseDistribution
+from distribution_2d import Distribution2D
 from channel import Channel
 from channel import ChannelOptions
 
